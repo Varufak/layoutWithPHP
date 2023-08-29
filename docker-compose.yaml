@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.21.1-alpine
+    ports:
+      - ${HOST_PORT}:80
+    volumes:
+      - .${DOCUMENT_ROOT}:/var/www/
+      - ./nginx/configs:/etc/nginx/templates
+      - ./nginx/logs:/var/log/nginx/
+    environment:
+      - GLOBAL_DOMAIN=example.com
+      - SERVER_PORT=80
+      - MAX_BUF_SIZE=1024G
+      - MAX_BODY_SIZE=1024G
+    restart: always
+
+  php-fpm:
+    image: php:8.2-fpm-alpine
+    volumes:
+      - .${DOCUMENT_ROOT}:/var/www/
+    working_dir: /var/www
+    extra_hosts:
+      - "example.com:172.17.0.1"
+    restart: always
+
+networks:
+  default:

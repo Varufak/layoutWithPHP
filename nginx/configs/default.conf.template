@@ -1,0 +1,79 @@
+# Default website
+server {
+
+    listen 80            default_server;
+    server_name          ${GLOBAL_DOMAIN};
+
+    charset             utf-8;
+    root                /var/www;
+    index               index.php;
+
+    access_log         /var/log/nginx/access.log main;
+    error_log          /var/log/nginx/error.log warn;
+
+    fastcgi_connect_timeout 300s;
+    fastcgi_send_timeout 300s;
+    fastcgi_read_timeout 300s;
+
+    location / {
+        try_files $uri $uri/ @php-app;
+    }
+
+    location ~ \.php$ {
+        try_files       $uri @php-app;
+        fastcgi_pass    php-fpm:9000;
+        fastcgi_index   index.php;
+        include         fastcgi_params;
+        fastcgi_param   SERVER_PORT     ${SERVER_PORT};
+        fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
+	#fastcgi_param PHP_ADMIN_VALUE "mbstring.func_overload = 0";
+    }
+
+    location @php-app {
+        fastcgi_pass    php-fpm:9000;
+        include         fastcgi_params;
+        fastcgi_param   SERVER_PORT     ${SERVER_PORT};
+        fastcgi_param   SCRIPT_FILENAME $document_root/index.php;
+    }
+
+    # favicon
+    location = /favicon.ico {
+        log_not_found off;
+        access_log    off;
+    }
+
+    # robots.txt
+    location = /robots.txt {
+        log_not_found off;
+        access_log    off;
+    }
+
+    # assets, media
+    location ~* \.(?:css(\.map)?|js(\.map)?|jpe?g|png|gif|ico|cur|heic|webp|tiff?|mp3|m4a|aac|ogg|midi?|wav|mp4|mov|webm|mpe?g|avi|ogv|flv|wmv)$ {
+        # kill cache
+        add_header Last-Modified $date_gmt;
+        add_header Cache-Control 'no-store, no-cache';
+        if_modified_since off;
+        expires 1s;
+        etag off;
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
+        access_log off;
+        # re-add security header
+        add_header X-Content-Type-Options nosniff;
+    }
+
+    # svg, fonts
+    location ~* \.(?:svgz?|ttf|ttc|otf|eot|woff2?)$ {
+        add_header Access-Control-Allow-Origin "*";
+        expires    7d;
+        access_log off;
+        add_header Cache-Control public;
+        # re-add security header
+        add_header X-Content-Type-Options nosniff;
+    }
+
+    # Disable access for non-static assets (not js and css) in cache location and other locations
+    location ~* (/\.ht|/\.git|/\.gitignore|/\.bash|/\.sql|\.settings\.php|/composer|/logs/) { deny all; }
+
+}

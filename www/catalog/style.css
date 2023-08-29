@@ -1,0 +1,13 @@
+.table {
+    border: 1px solid #444;
+    border-radius: 5px;
+}
+.table tr {
+    border-bottom: 1px solid #444;
+}
+.product-add-quantity-input{
+    text-align: center;
+    width: 30px;
+    border: none;
+    background-color: initial;
+}
